@@ -225,8 +225,9 @@ prompt-for-vpc-id() {
 
 main-menu() {
 	declare choice
-	choice=$(whiptail --fb --title "DynamoDB + DAX Benchmarker" --menu "Select an action" "$BOX_HEIGHT" "$BOX_WIDTH" 6 \
+	choice=$(whiptail --fb --title "DynamoDB + DAX Benchmarker" --menu "Select an action" "$BOX_HEIGHT" "$BOX_WIDTH" 7 \
 		"I" "(I)nitialize local environment" \
+		"B" "Open Dash(b)oards" \
 		"D" "(D)eploy and Run benchmarkers" \
 		"W" "(W)ipe away everything (Clean Slate)" \
 		"R" "(R)andomly populate DynamoDB" \
@@ -236,6 +237,18 @@ main-menu() {
 	case $choice in
 		"I")
 			initialize-environment
+			;;
+		"B")
+			msg-box "$(cat <<-EOF
+				This will open two new tabs in Firefox to display the DynamoDB and DAX dashboards.
+
+				The default credentials are:
+				Username: elastic
+				Password: changeme
+			EOF
+			)"
+			firefox --new-tab --url 'http://localhost:5601/app/dashboards#/view/51721040-24be-11ee-ac2e-ff8a2f0e28da?_g=(filters:!(),refreshInterval:(pause:!t,value:60000),time:(from:now-15m,to:now))' > /dev/null 2>&1 &
+			firefox --new-tab --url 'http://localhost:5601/app/dashboards#/view/0fe18820-2736-11ee-a70f-4976799912d8?_g=(filters:!(),refreshInterval:(pause:!t,value:60000),time:(from:now-15m,to:now))' > /dev/null 2>&1 &
 			;;
 		"D")
 			deploy-and-run-benchmarkers

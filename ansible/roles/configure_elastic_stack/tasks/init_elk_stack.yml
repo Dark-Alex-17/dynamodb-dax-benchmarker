@@ -19,9 +19,9 @@
     chdir: ../../docker-elk
     cmd: docker compose up -d
 
-- name: Wait 20 seconds for the ELK stack to start
+- name: Wait 30 seconds for the ELK stack to start
   pause:
-    seconds: 20
+    seconds: 30
 
 - name: Import the benchmarking dashboards into Kibana
   shell:

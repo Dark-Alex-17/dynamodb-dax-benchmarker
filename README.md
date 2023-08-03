@@ -1,9 +1,11 @@
 # DynamoDB + DAX Benchmarker
 This project houses the Rust and Go code to benchmark the performance of DynamoDB and DAX by simulating heavy loads.
 
-![main_menu](./screenshots/dynamodb-dax-benchmarker.png)
+![main_menu](./screenshots/main-menu.png)
+![dashboard_screenshot_1](./screenshots/dashboard-screenshot-1.png)
 ![advanced_mode](./screenshots/advanced-mode.png)
 ![ansible_playbook_tail](./screenshots/ansible-playbook-tail.png)
+![dashboard_screenshot_2](./screenshots/dashboard-screenshot-2.png)
 
 ## Features
 * [x] Simulate reads on existing data

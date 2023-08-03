@@ -23,3 +23,4 @@
   shell:
     cmd: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin v1.53.3
   when: golangci_lint_installation_status.rc | int != 0
+  become: yes
