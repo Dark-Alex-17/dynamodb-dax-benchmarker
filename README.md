@@ -45,6 +45,17 @@ all the time. You can remove them manually, or you can wipe away everything and 
 
 ## Getting Started
 
+### Prerequisites
+* The commands are being run in a Debian-based Linux environment (i.e. Ubuntu, WSL, etc.)
+* [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) is installed and configured
+* Docker is installed (`sudo apt-get update && sudo apt-get install docker-ce docker-ce-cli`)
+* The docker compose plugin is installed (`sudo apt-get update && sudo apt-get install docker-compose-plugin`)
+* Rust is installed via rustup (`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)
+* `jq` is installed (`sudo apt-get install jq`)
+* Go is installed ([instructions here](https://go.dev/doc/install))
+
+### Usage
+
 The easiest way to use this project is to use the [benchmarker.sh](./benchmarker.sh) script's TUI. This will automate everything for you and make
 the use of this project as painless as possible! Just ensure it's executable and run the TUI:
 
@@ -60,15 +71,6 @@ This project is broken into several distinct pieces. For more information on eac
 
 The vast majority of this project is designed to be automated; however, it is also designed to allow the user to customize it as needed. Naturally, customization
 is a more challenging course of action here as you'll need to do some of the automated steps manually. I try to detail those steps below.
-
-### Prerequisites
-* The commands are being run in a Debian-based Linux environment (i.e. Ubuntu, WSL, etc.)
-* [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) is installed and configured
-* Docker is installed (`sudo apt-get update && sudo apt-get install docker-ce docker-ce-cli`)
-* The docker compose plugin is installed (`sudo apt-get update && sudo apt-get install docker-compose-plugin`)
-* Rust is installed via rustup (`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)
-* `jq` is installed (`sudo apt-get install jq`)
-* Go is installed ([instructions here](https://go.dev/doc/install))
 
 ### Setting up your own local Elastic Stack
 Fortunately, setting up the Elastic Stack locally is super easy thanks to [this repository](https://github.com/deviantony/docker-elk).
