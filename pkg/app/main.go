@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Dark-Alex-17/dynamodb-benchmarker/pkg/models"
-	"github.com/Dark-Alex-17/dynamodb-benchmarker/pkg/simulators"
-	"github.com/Dark-Alex-17/dynamodb-benchmarker/pkg/utils"
+	"github.com/Dark-Alex-17/dynamodb-dax-benchmarker/pkg/models"
+	"github.com/Dark-Alex-17/dynamodb-dax-benchmarker/pkg/simulators"
+	"github.com/Dark-Alex-17/dynamodb-dax-benchmarker/pkg/utils"
 	"github.com/aws/aws-dax-go/dax"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"

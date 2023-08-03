@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Dark-Alex-17/dynamodb-benchmarker/pkg/models"
+	"github.com/Dark-Alex-17/dynamodb-dax-benchmarker/pkg/models"
 	"github.com/aws/aws-dax-go/dax"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	log "github.com/sirupsen/logrus"
