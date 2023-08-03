@@ -127,7 +127,7 @@ generate-put-request() {
 	attribute_values=$(generate-attribute-value 0)
 
 	for j in $(seq 1 $((ATTRIBUTES-1))); do
-		attribute_values="$attribute_values, $(generate-attribute-value "$j")"
+		attribute_values+=", $(generate-attribute-value "$j")"
 	done
 
 	
@@ -145,13 +145,13 @@ generate-put-request() {
 
 generate-batch-json() {
   declare batch_request='{ "'"$TABLE_NAME"'": ['
-	batch_request="$batch_request $(generate-put-request)"
+	batch_request+=" $(generate-put-request)"
 
   for i in $(seq 0 23); do
-    batch_request="$batch_request, $(generate-put-request)"
+    batch_request+=", $(generate-put-request)"
   done
 
-  batch_request="$batch_request ]}"
+  batch_request+=" ]}"
 
   echo "$batch_request"
 }
