@@ -15,7 +15,7 @@ bold=$(tput bold)
 
 log-error() {
   if [[ -z $2 ]]; then
-    echo -e "${red}${bold}ERROR:${default}${red} $1${default}"
+    echo -e "ERROR: $1"
   else
     echo -e "${red}${bold}ERROR:${default}${red} $1${default}"
     echo -e "${red}${bold}ERROR:${default}${red} $1${default}" >> "$BENCHMARK_LOG_FILE"
@@ -24,7 +24,7 @@ log-error() {
 
 log-warn() {
   if [[ -z $2 ]]; then
-    echo -e "${gold}${bold}WARN:${default}${gold} $1${default}"
+    echo -e "WARN: $1"
   else
     echo -e "${gold}${bold}WARN:${default}${gold} $1${default}"
     echo -e "${gold}${bold}WARN:${default}${gold} $1${default}" >> "$BENCHMARK_LOG_FILE"
@@ -33,7 +33,7 @@ log-warn() {
 
 log-info() {
   if [[ -z $2 ]]; then
-    echo -e "${cyan}${bold}INFO:${default}${cyan} $1${default}"
+    echo -e "INFO: $1"
   else
     echo -e "${cyan}${bold}INFO:${default}${cyan} $1${default}"
     echo -e "${cyan}${bold}INFO:${default}${cyan} $1${default}" >> "$BENCHMARK_LOG_FILE"

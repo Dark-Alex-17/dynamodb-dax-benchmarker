@@ -105,10 +105,8 @@ parse-arguments() {
 show-properties() {
   log-info "Using the following settings to randomly populate the DynamoDB benchmarking table:"
   cat <<-EOF
-	${cyan}
 	ATTRIBUTES=$ATTRIBUTES
 	TABLE_NAME=$TABLE_NAME
-	${default}
 	EOF
 }
 
@@ -178,3 +176,5 @@ while [[ $items_written -lt $ITEMS ]]; do
   log-info "Sleeping for 2 seconds to avoid the partition throughput limits..."
   sleep 2
 done
+
+echo -e "\n\n\nSuccessfully wrote $items_written randomly generated items to DynamoDB!"

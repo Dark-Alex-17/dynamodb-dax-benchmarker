@@ -1,9 +1,13 @@
 #!/bin/bash
 TERMINAL_HEIGHT=$(tput lines)
 BOX_HEIGHT=$(printf "%.0f" "$(echo "scale=2; $TERMINAL_HEIGHT * .5" | bc)")
+CHECKBOX_HEIGHT=$(printf "%.0f" "$(echo "scale=2; $TERMINAL_HEIGHT * .5" | bc)")
+TAIL_BOX_HEIGHT=$(printf "%.0f" "$(echo "scale=2; $TERMINAL_HEIGHT * .8" | bc)")
 
 TERMINAL_WIDTH=$(tput cols)
 BOX_WIDTH=$(printf "%.0f" "$(echo "scale=2; $TERMINAL_WIDTH * .75" | bc)")
+CHECKBOX_WIDTH=$(printf "%.0f" "$(echo "scale=2; $TERMINAL_WIDTH * .5" | bc)")
+TAIL_BOX_WIDTH=$(printf "%.0f" "$(echo "scale=2; $TERMINAL_WIDTH * .85" | bc)")
 
 msg-box() {
 	whiptail --fb --msgbox "$1" "$BOX_HEIGHT" "$BOX_WIDTH"
@@ -20,7 +24,7 @@ show-tail-box() {
 	trap "kill $2 2> /dev/null" EXIT
 
 	while kill -0 "$2" 2> /dev/null; do
-		dialog --title "$1" --exit-label "Finished" --tailbox "$3" "$BOX_HEIGHT" "$BOX_WIDTH"
+		dialog --title "$1" --exit-label "Finished" --tailbox "$3" "$TAIL_BOX_HEIGHT" "$TAIL_BOX_WIDTH"
 	done
 
 	clear

@@ -40,7 +40,6 @@ verify-prerequisites() {
 initialize-environment() {
 	check-sudo-pass "Installing dependencies requires sudo permissions."
 	if [[ "$?" == 0 ]]; then
-		log-info "Sudo pass: $PASSWORD"
 		declare title="Initialize Local Environment"
 
 		if (prompt-yes-no "$title"); then
@@ -82,9 +81,9 @@ deploy-and-run-benchmarkers() {
 
 		cd ansible
 
-		ansible-playbook -i inventories/local -e vpc_id="$VPC_ID" deploy_benchmarker.yml > "$ANSIBLE_LOG_FILE" 2>&1 &
+		ansible-playbook -i inventories/local -e vpc_id="$VPC_ID" --tags deploy deploy_benchmarker.yml > "$ANSIBLE_LOG_FILE" 2>&1 &
 		pid=$!
-		log-info "Running ansible-playbook 'deploy_benchmarker.yml' with no tags and logging output to file [$ANSIBLE_LOG_FILE]"
+		log-info "Running ansible-playbook 'deploy_benchmarker.yml' with tags [deploy] and logging output to file [$ANSIBLE_LOG_FILE]"
 
 		show-tail-box "$title" $pid "$ANSIBLE_LOG_FILE"
 
@@ -120,13 +119,14 @@ destroy-all() {
 
 randomly-populate-dynamodb() {
 	declare title="Populate DynamoDB with Random Data"
+	declare log_file=/tmp/dynamodb-data-population.log
 	
 	if (prompt-yes-no "$title"); then
-		./scripts/randomly-generate-high-velocity-data.sh /tmp/dynamodb-population.log &
+		./scripts/randomly-generate-high-velocity-data.sh -i 5000 > "$log_file" 2>&1 &
 		pid=$!
-		log-info "Running randomly-generate-high-velocity-data script and logging to [$ANSIBLE_LOG_FILE]"
+		log-info "Running randomly-generate-high-velocity-data script and logging to [$log_file]"
 
-		show-tail-box "$title" $pid "$ANSIBLE_LOG_FILE"
+		show-tail-box "$title" $pid "$log_file"
 
 		msg-box "Successfully populated DynamoDB with random data!"
 		log-info "Successfully populated DynamoDB with random data"
@@ -138,9 +138,12 @@ randomly-populate-dynamodb() {
 custom-selections() {
 	declare title="Customize What to Run (Advanced Mode)"
 	declare choices
+	declare prompted_for_sudo_pass=false
+	declare prompted_for_vpc_id=false
+	declare requires_vpc_id=false
 	declare tags=""
 
-	choices=$(whiptail --separate-output --checklist --fb "$title" "$BOX_HEIGHT" "$BOX_WIDTH" 13 \
+	choices=$(whiptail --separate-output --checklist --fb "$title" "$CHECKBOX_HEIGHT" "$CHECKBOX_WIDTH" 13 \
 		"PREREQUISITES" "Install Prerequisites for Local Machine" OFF \
 		"INITIALIZE_ELK" "Initialize Local Elastic Stack" OFF \
 		"START_ELK" "Start Local Elastic Stack" OFF \
@@ -159,55 +162,75 @@ custom-selections() {
 		for choice in $choices; do
 			case "$choice" in
 				"PREREQUISITES")
-					tags+="prerequisites"
+					tags+="prerequisites,"
+					check-sudo-pass "Installing dependencies requires sudo permissions."
+					prompted_for_sudo_pass=true
 					;;
 				"INITIALIZE_ELK")
-					tags+="init_elk"
+					tags+="init_elk,"
 					;;
 				"START_ELK")
-					tags+="elk"
+					tags+="elk,"
 					;;
 				"DEPLOY_CDK")
-					tags+="cdk"
-					;;
-				"UPLOAD_BIN")
-					tags+="upload"
-					;;
-				"RUN_BENCHMARKERS")
-					tags+="run"
+					tags+="cdk,"
+					requires_vpc_id=true
 					if [[ -z $VPC_ID ]]; then
 						prompt-for-vpc-id
+						prompted_for_vpc_id=true
+					fi
+					;;
+				"UPLOAD_BIN")
+					tags+="upload,"
+					;;
+				"RUN_BENCHMARKERS")
+					tags+="run,"
+					requires_vpc_id=true
+					if [[ -z $VPC_ID ]]; then
+						prompt-for-vpc-id
+						prompted_for_vpc_id=true
 					fi
 					;;
 				"STOP_ELK")
-					tags+="stop_elk"
+					tags+="stop_elk,"
 					;;
 				"DESTROY")
-					tags+="destroy"
+					tags+="destroy,"
 					;;
 				"DESTROY_KEY")
-					tags+="destroy_key_pair"
+					tags+="destroy_key_pair,"
 					;;
 				"RUN_DYNAMODB")
-					tags+="dynamodb"
+					tags+="dynamodb,"
 					;;
 				"RUN_DAX")
-					tags+="dax"
+					tags+="dax,"
 					;;
 				"RUN_CRUD")
-					tags+="crud"
+					tags+="crud,"
 					;;
 				"RUN_READ_ONLY")
-					tags+="read-only"
+					tags+="read-only,"
 					;;
 			esac
 		done
 
+		tags=$(echo "$tags" | sed 's/\(.*\),/\1/')
 
-		if (prompt-yes-no "$title"); then
+
+		if (prompt-yes-no "Advanced Mode: Deploy tasks with tags: [$tags]"); then
 			cd ansible
+			args=""
 
-			ansible-playbook -i inventories/local --tags "$tags" deploy_benchmarker.yml > "$ANSIBLE_LOG_FILE" 2>&1 &
+			if [[ $prompted_for_sudo_pass == true ]]; then
+				args+=" -e ansible_become_password='$PASSWORD'"
+			fi
+
+			if [[ $requires_vpc_id == true && $prompted_for_vpc_id == true ]]; then
+				args+=" -e vpc_id=$VPC_ID"
+			fi
+
+			ansible-playbook -i inventories/local $args --tags "$tags" deploy_benchmarker.yml > "$ANSIBLE_LOG_FILE" 2>&1 &
 			pid=$!
 			log-info "Running ansible-playbook 'deploy_benchmarker.yml' with [$tags] tags and logging output to file [$ANSIBLE_LOG_FILE]"
 
