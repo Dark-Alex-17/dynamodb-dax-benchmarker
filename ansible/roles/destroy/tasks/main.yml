@@ -1,0 +1,54 @@
+- name: Wipe away local Elastic Stack
+  shell:
+    chdir: ../../docker-elk
+    cmd: docker compose down -v
+  ignore_errors: yes
+
+- name: Wipe away the ELK directory
+  file:
+    path: ../../docker-elk
+    state: absent
+  ignore_errors: yes
+
+- name: Run CDK Destroy
+  import_role:
+    name:
+      deploy_cdk
+
+- name: Delete the key-pair from AWS
+  ec2_key:
+    name: "{{ ssh_key_name }}"
+    state: absent
+  ignore_errors: yes
+  tags: [ never, destroy_key_pair ]
+
+- name: Delete the key pair from your local machine
+  file:
+    path: "{{ ansible_env.HOME }}/.ssh/{{ ssh_key_name }}.pem"
+    state: absent
+  ignore_errors: yes
+  tags: [ never, destroy_key_pair ]
+
+- name: Remove the bastion host from the bastion host group
+  replace:
+    path: inventories/local/hosts.yml
+    replace: ''
+    regexp: '^bastion:\n\s*hosts:\n\s*(?:\d{1,3}\.){3}\d{1,3}:'
+
+- name: Reset the dax_endpoint variable in the host vars
+  lineinfile:
+    path: inventories/local/host_vars/localhost.yml
+    line: 'dax_endpoint:'
+    regexp: '^dax_endpoint:'
+
+- name: Reset the vpc_id variable in the host vars
+  lineinfile:
+    path: inventories/local/host_vars/localhost.yml
+    line: 'vpc_id:'
+    regexp: '^vpc_id:'
+
+- name: Clean the repository using the Makefile
+  shell:
+    chdir: ../
+    cmd:
+      make clean

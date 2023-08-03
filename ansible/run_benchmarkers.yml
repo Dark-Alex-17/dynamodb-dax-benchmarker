@@ -1,0 +1,110 @@
+- name: Get AWS Credentials
+  connection: local
+  hosts: local
+  gather_facts: yes
+  tags: [ run, deploy ]
+  tasks:
+    - name: Ensure the user is logged into their AWS CLI
+      assert:
+        that:
+          - aws_region is defined
+          - profile_id is defined
+          - dax_endpoint is defined
+
+    - name: Get the environment variables to set on the bastion host for the current AWS profile
+      shell:
+        cmd: aws configure export-credentials
+      register: aws_creds
+
+    - name: Register the aws_creds as a fact for the benchmarkers playbook to receive
+      set_fact:
+        aws_credentials: "{{ aws_creds.stdout }}"
+
+- name: Run the benchmarkers
+  hosts: bastion
+  gather_facts: no
+  vars:
+    ssh_key_name: "{{ hostvars['localhost']['ssh_key_name'] }}"
+    ansible_ssh_private_key_file: "~/.ssh/{{ ssh_key_name }}.pem"
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -R 9200:localhost:9200'
+  tags: [ run, deploy ]
+  remote_user: ec2-user
+  tasks:
+    - name: Run the DynamoDB benchmarker in CRUD mode
+      shell:
+        cmd: >
+          export AWS_ACCESS_KEY="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('AccessKeyId') }}";
+          export AWS_SECRET_ACCESS_KEY="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('SecretAccessKey') }}";
+          export AWS_SESSION_TOKEN="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('SessionToken') }}";
+          export AWS_CREDENTIAL_EXPIRATION="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('Expiration') }}";
+          export AWS_REGION="{{ hostvars['localhost']['aws_region'] }}";
+          ./dynamodb-benchmarker -d "{{ duration | default(1800) | int }}" -t "{{ hostvars['localhost']['user_name'] }}"-high-velocity-table
+        executable: /bin/bash
+      tags:
+        - dynamodb
+        - crud
+
+    - name: Run the DynamoDB benchmarker in read-only mode
+      shell:
+        cmd: >
+          export AWS_ACCESS_KEY="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('AccessKeyId') }}";
+          export AWS_SECRET_ACCESS_KEY="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('SecretAccessKey') }}";
+          export AWS_SESSION_TOKEN="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('SessionToken') }}";
+          export AWS_CREDENTIAL_EXPIRATION="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('Expiration') }}";
+          export AWS_REGION="{{ hostvars['localhost']['aws_region'] }}";
+          ./dynamodb-benchmarker -d "{{ duration | default(1800) | int }}" -t "{{ hostvars['localhost']['user_name'] }}"-high-velocity-table -r
+        executable: /bin/bash
+      tags:
+        - dynamodb
+        - read-only
+
+    - name: Run the DAX benchmarker in CRUD mode
+      shell:
+        cmd: >
+          export AWS_ACCESS_KEY="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('AccessKeyId') }}";
+          export AWS_SECRET_ACCESS_KEY="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('SecretAccessKey') }}";
+          export AWS_SESSION_TOKEN="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('SessionToken') }}";
+          export AWS_CREDENTIAL_EXPIRATION="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('Expiration') }}";
+          export AWS_REGION="{{ hostvars['localhost']['aws_region'] }}";
+          export DAX_ENDPOINT="{{ hostvars['localhost']['dax_endpoint'] }}";
+          unset cmd;
+          basecmd='./dax-benchmarker -c 100
+          -d 115
+          -t "{{ hostvars['localhost']['user_name'] }}"-high-velocity-table
+          -e "{{ hostvars['localhost']['dax_endpoint'] }}"';
+          for i in $(seq 1 9); do
+          cmd+="$basecmd & ";
+          done;
+          cmd+="$basecmd";
+          timeout -s SIGINT "{{ duration | default(1800) | int }}" bash -c "while :; do $cmd; done"
+        executable: /bin/bash
+      ignore_errors: yes
+      tags:
+        - dax
+        - crud
+
+    - name: Run the DAX benchmarker in read-only mode
+      shell:
+        cmd: >
+          export AWS_ACCESS_KEY="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('AccessKeyId') }}";
+          export AWS_SECRET_ACCESS_KEY="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('SecretAccessKey') }}";
+          export AWS_SESSION_TOKEN="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('SessionToken') }}";
+          export AWS_CREDENTIAL_EXPIRATION="{{ hostvars['localhost']['aws_credentials'] | community.general.json_query('Expiration') }}";
+          export AWS_REGION="{{ hostvars['localhost']['aws_region'] }}";
+          export DAX_ENDPOINT="{{ hostvars['localhost']['dax_endpoint'] }}";
+          unset cmd;
+          basecmd='./dax-benchmarker -c 100
+          -d 115
+          -r
+          -t "{{ hostvars['localhost']['user_name'] }}"-high-velocity-table
+          -e "{{ hostvars['localhost']['dax_endpoint'] }}"';
+          for i in $(seq 1 9); do
+          cmd+="$basecmd & ";
+          done;
+          cmd+="$basecmd";
+          timeout -s SIGINT "{{ duration | default(1800) | int }}" bash -c "while :; do $cmd; done"
+        executable: /bin/bash
+      ignore_errors: yes
+      tags:
+        - dax
+        - read-only

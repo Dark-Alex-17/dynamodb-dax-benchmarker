@@ -1,0 +1,11 @@
+- name: Check if rustup is installed
+  shell:
+    cmd: command -v rustup 2> /dev/null
+  ignore_errors: yes
+  changed_when: no
+  register: rustup_installation_status
+
+- name: Install Rust via Rustup
+  shell: >
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+  when: rustup_installation_status.rc | int != 0

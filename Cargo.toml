@@ -1,0 +1,25 @@
+[package]
+name = "dynamodb-benchmarker"
+version = "0.1.0"
+authors = ["Alex Clarke <alex.j.tusa@gmail.com>"]
+description = "A CLI tool for simulating heavy usage against DynamoDB and publishing metrics to an Elastic Stack for analysis"
+readme = "README.md"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.71"
+aws-config = "0.55.3"
+aws-sdk-dynamodb = "0.28.0"
+aws-types = "0.55.3"
+chrono = { version = "0.4.26", features = ["serde"] }
+clap = { version = "4.3.14", features = ["derive"] }
+elasticsearch = "8.5.0-alpha.1"
+lipsum = "0.9.0"
+log = "0.4.19"
+log4rs = { version = "1.2.0", features = ["console_appender"] }
+rand = "0.8.5"
+serde = { version = "1.0.171", features = ["derive"] }
+serde_json = { version = "1.0.102", features = ["arbitrary_precision"] }
+tokio = { version = "1.29.1", features = ["full"] }
+tokio-util = "0.7.8"
+uuid = { version = "1.4.0", features = ["v4", "fast-rng"] }

@@ -1,0 +1,26 @@
+- name: Check if AWS CLI is installed
+  shell:
+    cmd: hash aws 2> /dev/null
+  ignore_errors: yes
+  changed_when: no
+  register: awscli_installation_status
+
+- block:
+    - name: Download the AWS CLI from AWS
+      unarchive:
+        src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: "{{ ansible_env.HOME }}/Downloads"
+        group: "{{ user_name }}"
+        owner: "{{ user_name }}"
+        remote_src: yes
+
+    - name: Install the AWS CLI
+      shell:
+        cmd: "{{ ansible_env.HOME }}/Downloads/aws/install"
+
+    - name: Cleanup downloaded AWS installation files
+      file:
+        path: "{{ ansible_env.HOME }}/Downloads/aws/"
+        state: absent
+
+  when: awscli_installation_status.rc | int != 0

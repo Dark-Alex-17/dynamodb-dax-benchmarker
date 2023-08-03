@@ -1,0 +1,4 @@
+- name: Stop the docker-elk stack
+  shell:
+    chdir: ../../docker-elk
+    cmd: docker compose down

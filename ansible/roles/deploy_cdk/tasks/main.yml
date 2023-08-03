@@ -1,0 +1,119 @@
+- name: Check if a key-pair following the specified format already exists
+  stat:
+    path: "{{ ansible_env.HOME }}/.ssh/{{ ssh_key_name }}.pem"
+  register: key_pair
+  changed_when: no
+  when: "'destroy' not in ansible_run_tags"
+
+- block:
+    - name: Create a new key-pair
+      ec2_key:
+        name: "{{ ssh_key_name }}"
+      register: aws_key_pair
+
+    - name: Create the new pem file
+      file:
+        path: "{{ ansible_env.HOME }}/.ssh/{{ ssh_key_name }}.pem"
+        state: touch
+        mode: '0400'
+
+    - name: Add the generated key-pair to the new file
+      blockinfile:
+        path: "{{ ansible_env.HOME }}/.ssh/{{ ssh_key_name }}.pem"
+        block: "{{ aws_key_pair.key.private_key }}"
+
+  when:
+   - "'destroy' not in ansible_run_tags"
+   - not key_pair.stat.exists
+
+- name: Fetch the current system's public IP
+  shell:
+    cmd: curl -s -L checkip.amazonaws.com
+  register: public_ip_resp
+
+- name: Fetch the current AWS account ID
+  shell:
+    cmd: aws sts get-caller-identity | jq -r .Account
+  register: aws_account_resp
+
+- name: Install CDK dependencies
+  npm:
+    ci: yes
+    path: ../cdk
+
+- name: Bootstrapping the AWS environment
+  shell:
+    chdir: ../cdk
+    cmd: >
+      npm run build && yes | npm run cdk bootstrap --
+      --no-color --require-approval never
+      --profile {{ profile_id | default("personal") }}
+      -c vpcId={{ vpc_id }}
+      -c localIp={{ public_ip_resp.stdout }}
+      -c sshKeyName={{ ssh_key_name }}
+      -c awsAccount={{ aws_account_resp.stdout }}
+      -c baseTableName={{ base_table_name | default('') }}
+
+- name: Deploying Benchmarking CDK
+  shell:
+    chdir: ../cdk
+    cmd: >
+      npm run build && yes | npm run cdk {{ cdk_action | default("deploy") }} --
+      --no-color --require-approval never
+      --profile {{ profile_id | default("personal") }}
+      -c vpcId={{ vpc_id }}
+      -c localIp={{ public_ip_resp.stdout }}
+      -c sshKeyName={{ ssh_key_name }}
+      -c awsAccount={{ aws_account_resp.stdout }}
+      -c baseTableName={{ base_table_name | default('') }}
+  register: cdk_response
+
+- name: Benchmarking CDK deployment summary
+  debug:
+    msg: "{{ cdk_response.stderr_lines }}"
+
+- block:
+  - name: Fetch the benchmark stack outputs
+    cloudformation_info:
+      stack_name: "{{ stack_name }}"
+    register: benchmark_stack
+
+  - name: Extracting the bastion host IP
+    set_fact:
+      bastion_host_ip: "{{ benchmark_stack.cloudformation[stack_name].stack_outputs['InstancePublicIp'] }}"
+
+  - name: Extracting DAX endpoint
+    set_fact:
+      dax_endpoint: "{{ benchmark_stack.cloudformation[stack_name].stack_outputs['DaxEndpoint'] }}"
+
+  - name: Setting the dax_endpoint variable in the host vars if it doesn't exist already
+    lineinfile:
+      path: inventories/local/host_vars/localhost.yml
+      line: "dax_endpoint: {{ dax_endpoint }}"
+      regexp: '^dax_endpoint:'
+
+  - name: Setting the vpc_id variable in the host vars if it doesn't exist already
+    lineinfile:
+      path: inventories/local/host_vars/localhost.yml
+      line: "vpc_id: {{ vpc_id }}"
+      regexp: '^vpc_id:'
+
+  - block:
+    - name: Setting the bastion host IP if it doesnt exist in the inventory
+      lineinfile:
+        path: inventories/local/hosts.yml
+        line: |
+          bastion:
+            hosts:
+              {{ bastion_host_ip }}:
+        regexp: 'bastion:\n\s*hosts:\n\s*(?:\d{1,3}\.){3}\d{1,3}:'
+        insertafter: EOF
+
+    - name: Add the bastion host to the bastion group
+      add_host:
+        name: "{{ bastion_host_ip }}"
+        groups: bastion
+    when:
+      - "'bastion' not in groups"
+      - "'bastion' not in group_names"
+  when: "'destroy' not in ansible_run_tags"

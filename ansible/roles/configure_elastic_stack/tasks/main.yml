@@ -1,0 +1,8 @@
+- { import_tasks: init_elk_stack.yml, tags: [ never, init, init_elk ] }
+- { import_tasks: stop_elk_stack.yml, tags: [ never, stop_elk ] }
+
+- name: Start the docker-elk stack
+  shell:
+    chdir: ../../docker-elk
+    cmd: docker compose up -d
+  tags: deploy

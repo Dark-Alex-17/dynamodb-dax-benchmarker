@@ -1,0 +1,25 @@
+- { import_tasks: aws_cli.yml, become: yes }
+- import_tasks: rust.yml
+- import_tasks: go.yml
+- import_tasks: node.yml
+- { import_tasks: apt.yml, become: yes }
+
+- name: Install CDK
+  npm:
+    name: "{{ item }}"
+    global: yes
+  loop:
+    - aws-cdk
+    - typescript
+
+- name: Check if golangci-lint is installed
+  shell:
+    cmd: command -v golangci-lint 2> /dev/null
+  ignore_errors: yes
+  changed_when: no
+  register: golangci_lint_installation_status
+
+- name: Install golangci-lint
+  shell:
+    cmd: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin v1.53.3
+  when: golangci_lint_installation_status.rc | int != 0

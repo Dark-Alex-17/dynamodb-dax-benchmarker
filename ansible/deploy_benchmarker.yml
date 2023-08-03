@@ -1,0 +1,41 @@
+- name: Deploy the benchmarking components
+  connection: local
+  hosts: local
+  gather_facts: yes
+  roles:
+    - { role: install_prerequisites, tags: [ never, prerequisites, init ] }
+    - { role: configure_elastic_stack, tags: elk }
+    - { role: deploy_cdk, tags: [ cdk, deploy ] }
+    - { role: destroy, tags: [ never, destroy ], cdk_action: destroy }
+  tasks:
+    - name: Populate the DynamoDB table with random data
+      shell:
+        chdir: ../scripts
+        cmd: ./randomly-generate-high-velocity-data.sh -i 5000
+      tags: deploy
+
+    - name: Build the benchmarkers using the Makefile
+      shell:
+        chdir: ../
+        cmd: make build
+      tags: deploy
+
+- name: Upload the benchmarkers to the bastion host
+  hosts: bastion
+  gather_facts: yes
+  vars:
+    ssh_key_name: "{{ hostvars['localhost']['ssh_key_name'] }}"
+    ansible_ssh_private_key_file: "~/.ssh/{{ ssh_key_name }}.pem"
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+  remote_user: ec2-user
+  tags: [ upload, deploy ]
+  tasks:
+    - copy:
+        src: "../{{ item }}"
+        dest: .
+        mode: 0777
+      loop:
+        - dynamodb-benchmarker
+        - dax-benchmarker
+
+- import_playbook: run_benchmarkers.yml

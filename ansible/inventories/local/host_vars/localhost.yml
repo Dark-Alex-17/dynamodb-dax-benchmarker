@@ -1,0 +1,8 @@
+user_name: "{{ lookup('env', 'USER') }}"
+ssh_key_name: "{{ lookup('env', 'USER') }}-dax-pair"
+profile_id: "{{ lookup('env', 'AWS_PROFILE') }}"
+aws_region: "{{ lookup('env', 'AWS_REGION') }}"
+stack_name: "{{ user_name }}-dax-benchmark-stack"
+vpc_id:
+base_table_name:
+dax_endpoint:

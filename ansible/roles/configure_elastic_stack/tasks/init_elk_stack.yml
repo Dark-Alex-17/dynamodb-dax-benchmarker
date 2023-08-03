@@ -1,0 +1,32 @@
+- name: Clone the docker-elk repo
+  git:
+    repo: https://github.com/deviantony/docker-elk.git
+    dest: ../../docker-elk
+  ignore_errors: yes
+
+- name: Build the docker-elk stack just in case a pre-existing version of Elasticsearch needs its nodes upgraded
+  shell:
+    chdir: ../../docker-elk
+    cmd: docker compose build
+
+- name: Start the docker-elk setup container
+  shell:
+    chdir: ../../docker-elk
+    cmd: docker-compose up setup
+
+- name: Start the docker-elk stack
+  shell:
+    chdir: ../../docker-elk
+    cmd: docker compose up -d
+
+- name: Wait 20 seconds for the ELK stack to start
+  pause:
+    seconds: 20
+
+- name: Import the benchmarking dashboards into Kibana
+  shell:
+    cmd: >
+      curl -X POST http://localhost:5601/api/saved_objects/_import?overwrite=true 
+      -H 'kbn-xsrf: true' 
+      -u 'elastic:changeme' 
+      --form file=@roles/configure_elastic_stack/files/benchmarker-dashboards.ndjson
