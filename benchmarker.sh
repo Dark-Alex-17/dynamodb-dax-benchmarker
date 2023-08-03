@@ -62,6 +62,16 @@ initialize-environment() {
 	main-menu
 }
 
+prompt-for-vpc-id() {
+	readarray -t vpc_arr < <(aws ec2 describe-vpcs | jq -r '.Vpcs[] | "\(.VpcId) \((.Tags[]? | select(.Key | contains("Name")) | .Value) // "")"' | awk '{print($1, $2 == "" ? "-" : $2);}')
+	declare prompt=""
+	for item in "${vpc_arr[@]}"; do
+		prompt+="$item OFF "
+	done
+
+	VPC_ID=$(whiptail --fb --title "Select VPC" --radiolist "Select which VPC to use to deploy resources into" "$BOX_HEIGHT" "$BOX_WIDTH" "${#vpc_arr[@]}" $prompt 3>&2 2>&1 1>&3)
+}
+
 deploy-and-run-benchmarkers() {
 	declare title="Deploy and Run Benchmarkers"
 	
@@ -211,16 +221,6 @@ custom-selections() {
 	fi
 
 	main-menu
-}
-
-prompt-for-vpc-id() {
-	readarray -t vpc_arr < <(aws ec2 describe-vpcs | jq -r '.Vpcs[] | "\(.VpcId) \((.Tags[]? | select(.Key | contains("Name")) | .Value) // "")"' | awk '{print($1, $2 == "" ? "-" : $2);}')
-	declare prompt=""
-	for item in "${vpc_arr[@]}"; do
-		prompt+="$item OFF "
-	done
-
-	VPC_ID=$(whiptail --fb --title "Select VPC" --radiolist "Select which VPC to use to deploy resources into" "$BOX_HEIGHT" "$BOX_WIDTH" "${vpc_arr[@]}" $prompt 3>&2 2>&1 1>&3)
 }
 
 main-menu() {

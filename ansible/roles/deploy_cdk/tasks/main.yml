@@ -21,6 +21,13 @@
       blockinfile:
         path: "{{ ansible_env.HOME }}/.ssh/{{ ssh_key_name }}.pem"
         block: "{{ aws_key_pair.key.private_key }}"
+        marker: ""
+
+    - name: Remove the blank lines from blockinfile module
+      lineinfile:
+        path: "{{ ansible_env.HOME }}/.ssh/{{ ssh_key_name }}.pem"
+        state: absent
+        regexp: '^$'
 
   when:
    - "'destroy' not in ansible_run_tags"
