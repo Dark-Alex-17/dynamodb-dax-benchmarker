@@ -19,7 +19,7 @@ build-dynamodb-benchmarker:
 	@cargo clean && rm -f dynamodb-benchmarker && cargo build --release && mv ./target/release/dynamodb-benchmarker .
 
 build-dax-benchmarker:
-	@rm -f main && rm -f dax-benchmarker && go build -o dax-benchmarker pkg/app/main.go
+	@rm -f main && rm -f dax-benchmarker && go mod tidy && go build -o dax-benchmarker pkg/app/main.go
 
 build: build-dynamodb-benchmarker build-dax-benchmarker
 	
