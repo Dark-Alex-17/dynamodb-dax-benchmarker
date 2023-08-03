@@ -38,7 +38,6 @@
 
 - name: Install CDK dependencies
   npm:
-    ci: yes
     path: ../cdk
 
 - name: Bootstrapping the AWS environment
