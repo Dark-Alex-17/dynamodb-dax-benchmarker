@@ -27,24 +27,24 @@ export class DaxBenchmarkingStack extends Stack {
     const { instanceRole, instance } = new DaxBastionHost(this, `${user}-dax-bastion-host`, environmentProps, daxSecurityGroup);
 
     const daxClusterName = `${user}-high-velocity`;
-      const daxFullAccessPolicy = new PolicyStatement({
-          effect: Effect.ALLOW,
-          actions: [
-              "dynamodb:BatchGetItem",
-              "dynamodb:GetItem",
-              "dynamodb:Query",
-              "dynamodb:Scan",
-              "dynamodb:BatchWriteItem",
-              "dynamodb:DeleteItem",
-              "dynamodb:PutItem",
-              "dynamodb:UpdateItem",
-              "dynamodb:DescribeLimits",
-              "dynamodb:DescribeTimeToLive",
-              "dynamodb:DescribeTable",
-              "dynamodb:ListTables"
-          ],
-          resources: [table.tableArn]
-      });
+    const daxFullAccessPolicy = new PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: [
+            "dynamodb:BatchGetItem",
+            "dynamodb:GetItem",
+            "dynamodb:Query",
+            "dynamodb:Scan",
+            "dynamodb:BatchWriteItem",
+            "dynamodb:DeleteItem",
+            "dynamodb:PutItem",
+            "dynamodb:UpdateItem",
+            "dynamodb:DescribeLimits",
+            "dynamodb:DescribeTimeToLive",
+            "dynamodb:DescribeTable",
+            "dynamodb:ListTables"
+        ],
+        resources: [table.tableArn]
+    });
 
     const daxServiceRole = new Role(this, `${daxClusterName}-role`, {
       assumedBy: new ServicePrincipal("dax.amazonaws.com"),

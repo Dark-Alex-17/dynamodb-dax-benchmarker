@@ -164,13 +164,11 @@ fi
 parse-arguments "$@"
 show-properties
 
-declare -i i=0
 declare -i items_written=0
 while [[ $items_written -lt $ITEMS ]]; do
   log-info "Writing 25 entries to DynamoDB..."
   aws dynamodb batch-write-item --request-items "$(generate-batch-json)"
   log-info 'Entries Written!'
-  ((i++))
 	((items_written+=25))
   log-info "Total entries written: $items_written"
   log-info "Sleeping for 2 seconds to avoid the partition throughput limits..."
