@@ -195,8 +195,10 @@ async fn simulation_loop(
 ) {
   let mut rng = StdRng::from_seed(OsRng.gen());
   loop {
-    let mut metrics = DynamoDbSimulationMetrics::default();
-    metrics.timestamp = Utc::now();
+    let mut metrics = DynamoDbSimulationMetrics {
+      timestamp: Utc::now(),
+      ..DynamoDbSimulationMetrics::default()
+    };
 
     let simulation_time = time!(match {
       if read_only {
@@ -280,7 +282,7 @@ async fn scan_all_partition_keys(
       let partition_keys = resp
         .items()
         .unwrap()
-        .into_iter()
+        .iter()
         .map(|attribute| {
           attribute
             .values()
